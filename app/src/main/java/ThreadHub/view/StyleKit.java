@@ -3,6 +3,7 @@ package ThreadHub.view;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -118,5 +119,13 @@ public class StyleKit {
         "-fx-border-width: 1;"
       );
     return box;
+    }
+  public static Region hSeparator() {
+    Region sep = new Region();
+    sep.setPrefHeight(1);
+    sep.setStyle(
+      "-fx-background-color: " + BORDER + ";"
+    );
+    return sep;
     }
 }
