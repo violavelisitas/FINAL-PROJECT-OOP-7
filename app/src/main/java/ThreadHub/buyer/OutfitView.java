@@ -11,7 +11,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.scene.Scene;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OutfitView {
@@ -20,6 +25,8 @@ public class OutfitView {
     private final KeranjangController keranjang;
     private final DataStore ds = DataStore.getInstance();
     private FlowPane cardsContainer;
+    
+    private final List<Button> filterButtons = new ArrayList<>();
 
     public OutfitView(BuyerDashboardView dashboard, KeranjangController keranjang) {
         this.dashboard = dashboard;
@@ -40,11 +47,53 @@ public class OutfitView {
         
         for (String style : styles) {
             Button btnFilter = new Button(style);
-            btnFilter.setStyle(
-                "-fx-background-color: white; -fx-border-color: #DDDDDD; -fx-border-radius: 20; " +
-                "-fx-background-radius: 20; -fx-text-fill: #555555; -fx-font-weight: bold; -fx-cursor: hand;"
-            );
-            btnFilter.setOnAction(e -> muatDaftarOutfit(style));
+            
+            String defaultStyle = "-fx-background-color: white; -fx-border-color: #DDDDDD; " +
+                                  "-fx-border-radius: 20; -fx-background-radius: 20; " +
+                                  "-fx-text-fill: #555555; -fx-font-weight: bold; -fx-cursor: hand;";
+                                  
+            String activeStyle = "-fx-background-color: " + StyleKit.ACCENT + "; -fx-border-color: " + StyleKit.ACCENT + "; " +
+                                 "-fx-border-radius: 20; -fx-background-radius: 20; " +
+                                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;";
+
+            btnFilter.setStyle(defaultStyle);
+            
+            if (style.equals("SEMUA")) {
+                btnFilter.setStyle(activeStyle);
+                btnFilter.setUserData("ACTIVE");
+            } else {
+                btnFilter.setUserData("INACTIVE");
+            }
+            
+            btnFilter.setOnMouseEntered(e -> {
+                if (btnFilter.getUserData().equals("INACTIVE")) {
+                    btnFilter.setStyle(
+                        "-fx-background-color: #F0F0F0; -fx-border-color: #CCCCCC; " +
+                        "-fx-border-radius: 20; -fx-background-radius: 20; " +
+                        "-fx-text-fill: #333333; -fx-font-weight: bold; -fx-cursor: hand;"
+                    );
+                }
+            });
+
+            btnFilter.setOnMouseExited(e -> {
+                if (btnFilter.getUserData().equals("INACTIVE")) {
+                    btnFilter.setStyle(defaultStyle);
+                }
+            });
+
+            btnFilter.setOnAction(e -> {
+                for (Button btn : filterButtons) {
+                    btn.setStyle(defaultStyle);
+                    btn.setUserData("INACTIVE");
+                }
+                
+                btnFilter.setStyle(activeStyle);
+                btnFilter.setUserData("ACTIVE");
+                
+                muatDaftarOutfit(style);
+            });
+            
+            filterButtons.add(btnFilter);
             filterBox.getChildren().add(btnFilter);
         }
 
@@ -84,31 +133,26 @@ public class OutfitView {
     private VBox buildOutfitCard(OutfitBundle ob) {
         VBox card = new VBox(12);
         
-        // 1. LEBAR KARTU DISAMAKAN DENGAN GAMBAR (250)
         card.setPrefWidth(250); 
         card.setStyle(
             "-fx-background-color: white; -fx-background-radius: 12; " +
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 5);"
         );
 
-        // --- BOKS UNTUK GAMBAR ---
         VBox imageBox = new VBox();
         imageBox.setAlignment(Pos.CENTER);
         imageBox.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12 12 0 0;");
         
-        // 2. TINGGI BOKS GAMBAR
         imageBox.setPrefHeight(280); 
         
         if (ob.getImagePath() != null && !ob.getImagePath().isEmpty()) {
             try {
                 ImageView imgView = new ImageView(new Image(ob.getImagePath()));
                 
-                // 3. UKURAN GAMBAR (Pas dengan kartu)
                 imgView.setFitWidth(250);
                 imgView.setFitHeight(280);
                 imgView.setPreserveRatio(false); 
                 
-                // 4. POTONGAN SUDUT MELENGKUNG (Sesuai ukuran gambar)
                 javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(250, 280);
                 clip.setArcWidth(24);
                 clip.setArcHeight(24);
@@ -127,9 +171,7 @@ public class OutfitView {
             lblNoImg.setTextFill(Color.GRAY);
             imageBox.getChildren().add(lblNoImg);
         }
-        // ------------------------
 
-        // --- BOKS UNTUK KONTEN (Teks & Tombol) ---
         VBox contentBox = new VBox(10);
         contentBox.setPadding(new Insets(15));
 
@@ -170,17 +212,48 @@ public class OutfitView {
             }
             dashboard.updateCartBadge();
             
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Berhasil");
-            alert.setHeaderText(null);
-            alert.setContentText("Paket '" + ob.getNamaPaket() + "' berhasil ditambahkan ke keranjang!");
-            alert.showAndWait();
+            showSuccessDialog("Paket '" + ob.getNamaPaket() + "' berhasil ditambahkan ke keranjang!");
         });
 
         contentBox.getChildren().addAll(lblStyle, lblNama, lblDeskripsi, itemsBox, spacer, lblTotal, btnBeliSet);
         
-        // Satukan gambar dan konten ke dalam kartu
         card.getChildren().addAll(imageBox, contentBox);
         return card;
+    }
+
+    // Custom Dialog
+    private void showSuccessDialog(String msg) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.TRANSPARENT);
+
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(30));
+        root.setAlignment(Pos.CENTER);
+        
+        root.setStyle("-fx-background-color: #1a1c29; -fx-background-radius: 15; -fx-border-color: #2d3142; -fx-border-radius: 15; -fx-border-width: 2;");
+
+        Label icon = new Label("✅");
+        icon.setStyle("-fx-font-size: 48px;");
+
+        Label titleLabel = new Label("Berhasil");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 20px;");
+
+        Label content = new Label(msg);
+        content.setStyle("-fx-text-fill: #a9b1d6; -fx-font-size: 14px;");
+        content.setTextAlignment(TextAlignment.CENTER);
+        content.setWrapText(true);
+
+        Button btnOk = StyleKit.primaryButton("OK");
+        btnOk.setMinWidth(120);
+        btnOk.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(icon, titleLabel, content, btnOk);
+
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.centerOnScreen();
+        dialog.showAndWait();
     }
 }

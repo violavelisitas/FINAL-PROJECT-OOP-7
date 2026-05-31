@@ -19,6 +19,8 @@ public class BuyerDashboardView {
     private BorderPane root;
     private Label cartBadge;
     private TextField searchBar; 
+    
+    private Label activeCategoryLabel;
 
     public BuyerDashboardView(Stage stage, Buyer buyer) {
         this.stage     = stage;
@@ -33,11 +35,17 @@ public class BuyerDashboardView {
         root.setTop(buildZaloraHeader());
         showProdukView(); 
 
-        Scene scene = new Scene(root, 1200, 720);
+        if (stage.getScene() != null) {
+            stage.getScene().setRoot(root);
+        } else {
+            Scene scene = new Scene(root, 1200, 720);
+            stage.setScene(scene);
+            stage.centerOnScreen();
+        }
+
         stage.setTitle("ThreadHub — Belanja");
-        stage.setScene(scene);
         stage.setResizable(true);
-        stage.centerOnScreen();
+        stage.setMaximized(true);
         stage.show();
     }
 
@@ -49,40 +57,44 @@ public class BuyerDashboardView {
             "-fx-border-width: 1;"
         );
 
-        // 1. Baris Atas (Logo, Search Bar, User Actions)
-        HBox topRow = new HBox(20);
-        topRow.setAlignment(Pos.CENTER_LEFT); 
-        topRow.setPadding(new Insets(15, 40, 15, 40));
+        GridPane topRow = new GridPane();
+        
+        topRow.setPadding(new Insets(35, 50, 15, 50)); 
+
+        ColumnConstraints colKiri = new ColumnConstraints();
+        colKiri.setPercentWidth(30);
+        colKiri.setHalignment(HPos.LEFT);
+
+        ColumnConstraints colTengah = new ColumnConstraints();
+        colTengah.setPercentWidth(40);
+        colTengah.setHalignment(HPos.CENTER);
+
+        ColumnConstraints colKanan = new ColumnConstraints();
+        colKanan.setPercentWidth(30);
+        colKanan.setHalignment(HPos.RIGHT);
+
+        topRow.getColumnConstraints().addAll(colKiri, colTengah, colKanan);
 
         Label logo = new Label("THREADHUB");
         logo.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.EXTRA_BOLD, 26)); 
         logo.setTextFill(Color.web(StyleKit.ACCENT)); 
-        logo.setTranslateY(2); // Menjaga kelurusan vertikal agar center
-        logo.setOnMouseClicked(e -> {
-            searchBar.clear();
-            showProdukView();
-        });
-        logo.setCursor(Cursor.HAND);
-
-        Region spacerLeft = new Region();
-        HBox.setHgrow(spacerLeft, Priority.ALWAYS);
+        logo.setTranslateY(2); 
+        HBox leftBox = new HBox(logo);
+        leftBox.setAlignment(Pos.CENTER_LEFT);
+        topRow.add(leftBox, 0, 0);
 
         searchBar = new TextField();
         searchBar.setPromptText("Cari produk atau kategori... (Tekan Enter)");
-        searchBar.setPrefWidth(450);
+        searchBar.setPrefWidth(450); 
         searchBar.setStyle(
             "-fx-background-radius: 20; -fx-border-radius: 20; " +
             "-fx-padding: 8 15 8 15; -fx-border-color: #FFFFFF; " + 
             "-fx-background-color: transparent; -fx-text-fill: #FFFFFF; " + 
             "-fx-prompt-text-fill: #AAAAAA;" 
         );
-        searchBar.setOnAction(e -> {
-            String keyword = searchBar.getText().trim();
-            showProdukView("SEMUA", keyword); 
-        });
-
-        Region spacerRight = new Region();
-        HBox.setHgrow(spacerRight, Priority.ALWAYS);
+        HBox centerBox = new HBox(searchBar);
+        centerBox.setAlignment(Pos.CENTER); 
+        topRow.add(centerBox, 1, 0);
 
         HBox userActions = new HBox(20);
         userActions.setAlignment(Pos.CENTER_RIGHT);
@@ -92,7 +104,10 @@ public class BuyerDashboardView {
         greeting.setTextFill(Color.WHITE); 
         
         Button btnRiwayat = createFlatButton("Riwayat");
-        btnRiwayat.setOnAction(e -> showRiwayatView());
+        btnRiwayat.setOnAction(e -> {
+            setActiveCategory(null); 
+            showRiwayatView();
+        });
 
         Button btnLogout = createFlatButton("Logout");
         btnLogout.setOnAction(e -> new LoginView(stage).show());
@@ -100,26 +115,39 @@ public class BuyerDashboardView {
         StackPane cartIconContainer = buildCartIcon();
 
         userActions.getChildren().addAll(greeting, btnRiwayat, cartIconContainer, btnLogout);
-        topRow.getChildren().addAll(logo, spacerLeft, searchBar, spacerRight, userActions);
+        topRow.add(userActions, 2, 0);
+
 
         HBox categoryRow = new HBox(35);
-        categoryRow.setAlignment(Pos.CENTER);
+        categoryRow.setAlignment(Pos.CENTER); 
         categoryRow.setPadding(new Insets(0, 0, 15, 0));
 
         String[] categories = {"PAKAIAN", "WANITA", "PRIA", "ANAK-ANAK", "✨ INSPIRASI OUTFIT"};
+        
         for (String cat : categories) {
             Label catLabel = new Label(cat);
             catLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 12));
             catLabel.setCursor(Cursor.HAND);
-            catLabel.setTextFill(Color.WHITE); 
+            
+            if (cat.equals("PAKAIAN")) {
+                catLabel.setStyle("-fx-text-fill: " + StyleKit.ACCENT + ";");
+                activeCategoryLabel = catLabel;
+            } else {
+                catLabel.setStyle("-fx-text-fill: #FFFFFF;"); 
+            }
 
-            catLabel.setOnMouseEntered(e -> catLabel.setTextFill(Color.web(StyleKit.ACCENT)));
-            catLabel.setOnMouseExited(e -> catLabel.setTextFill(Color.WHITE)); 
+            catLabel.setOnMouseEntered(e -> catLabel.setStyle("-fx-text-fill: " + StyleKit.ACCENT + ";"));
+            
+            catLabel.setOnMouseExited(e -> {
+                if (activeCategoryLabel != catLabel) {
+                    catLabel.setStyle("-fx-text-fill: #FFFFFF;");
+                }
+            }); 
             
             catLabel.setOnMouseClicked(e -> {
+                setActiveCategory(catLabel); 
                 searchBar.clear(); 
                 
-                // LOGIKA NAVIGASI BARU
                 if (cat.equals("✨ INSPIRASI OUTFIT")) {
                     showOutfitView();
                 } else {
@@ -127,11 +155,38 @@ public class BuyerDashboardView {
                     showProdukView(targetGender);
                 }
             }); 
+            
+            if (cat.equals("PAKAIAN")) {
+                logo.setOnMouseClicked(e -> {
+                    setActiveCategory(catLabel); 
+                    searchBar.clear();
+                    showProdukView();
+                });
+                logo.setCursor(Cursor.HAND);
+            }
+            
+            searchBar.setOnAction(e -> {
+                setActiveCategory(null); 
+                String keyword = searchBar.getText().trim();
+                showProdukView("SEMUA", keyword); 
+            });
+
             categoryRow.getChildren().add(catLabel);
         }
 
         header.getChildren().addAll(topRow, categoryRow);
         return header;
+    }
+    
+    private void setActiveCategory(Label newActiveLabel) {
+        if (activeCategoryLabel != null) {
+            activeCategoryLabel.setStyle("-fx-text-fill: #FFFFFF;");
+        }
+        
+        activeCategoryLabel = newActiveLabel;
+        if (activeCategoryLabel != null) {
+            activeCategoryLabel.setStyle("-fx-text-fill: " + StyleKit.ACCENT + ";");
+        }
     }
 
     private StackPane buildCartIcon() {
@@ -153,7 +208,10 @@ public class BuyerDashboardView {
         cartBadge.setVisible(false);
 
         stack.getChildren().addAll(btnKeranjang, cartBadge);
-        stack.setOnMouseClicked(e -> showIntegrasiKeranjang());
+        stack.setOnMouseClicked(e -> {
+            setActiveCategory(null); 
+            showIntegrasiKeranjang();
+        });
 
         return stack;
     }
@@ -201,7 +259,7 @@ public class BuyerDashboardView {
 
     public void updateCartBadge() {
         int total = keranjang.getItems().stream()
-                .mapToInt(app.model.ItemKeranjang::getJumlah).sum();
+                .mapToInt(ThreadHub.model.ItemKeranjang::getJumlah).sum();
         cartBadge.setText(String.valueOf(total));
         cartBadge.setVisible(total > 0);
     }
