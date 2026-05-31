@@ -10,7 +10,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class LoginView {
 
@@ -22,17 +24,14 @@ public class LoginView {
     }
 
     public HBox buildLayout() {
-        // branding panel 
         VBox brandPanel = new VBox(12);
         brandPanel.setAlignment(Pos.CENTER);
         brandPanel.setPrefWidth(400);
         brandPanel.setStyle("-fx-background-color: " + StyleKit.ACCENT + ";");
         brandPanel.setPadding(new Insets(60));
 
-        // --- BAGIAN LOGO ---
         ImageView logoView = new ImageView();
         try {
-            // Pastikan gambar dengan nama "logo_threadhub.png" ada di dalam folder src/main/resources
             Image img = new Image(getClass().getResourceAsStream("/logo_threadhub.png"));
             logoView.setImage(img);
             logoView.setFitWidth(250);
@@ -53,7 +52,6 @@ public class LoginView {
         tagline.setTextAlignment(TextAlignment.CENTER);
         tagline.setWrapText(true);
 
-        // Memasukkan logoView dan appName ke dalam panel
         brandPanel.getChildren().addAll(logoView, appName, tagline);
 
         // form login panel Utama
@@ -67,12 +65,10 @@ public class LoginView {
         Label subLabel     = StyleKit.mutedLabel("Masuk untuk melanjutkan ke ThreadHub");
         subLabel.setFont(Font.font(StyleKit.FONT_FAMILY, 14));
 
-        // Wadah Input pembatas lebar maksimal komponen agar proporsional saat fullscreen
         VBox inputContainer = new VBox(14);
         inputContainer.setMaxWidth(320); 
         inputContainer.setAlignment(Pos.CENTER_LEFT);
 
-        // Username field
         Label usernameLabel = new Label("Username");
         usernameLabel.setTextFill(Color.web(StyleKit.TEXT_MUTED));
         usernameLabel.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
@@ -80,7 +76,6 @@ public class LoginView {
         usernameField.setPromptText("Masukkan username");
         styleTextField(usernameField);
 
-        // Password field
         Label passwordLabel = new Label("Password");
         passwordLabel.setTextFill(Color.web(StyleKit.TEXT_MUTED));
         passwordLabel.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
@@ -88,27 +83,17 @@ public class LoginView {
         passwordField.setPromptText("Masukkan password");
         styleTextField(passwordField);
 
-        // Error label
         errorLabel = new Label("");
         errorLabel.setTextFill(Color.web(StyleKit.ACCENT));
         errorLabel.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
 
-        // Tombol login
         Button loginBtn = StyleKit.primaryButton("Masuk");
         loginBtn.setMaxWidth(Double.MAX_VALUE);
         loginBtn.setStyle(loginBtn.getStyle() + "-fx-font-size: 15px; -fx-padding: 12 0;");
 
-        loginBtn.setOnAction(e -> handleLogin(
-                usernameField.getText().trim(),
-                passwordField.getText()
-        ));
+        loginBtn.setOnAction(e -> handleLogin(usernameField.getText().trim(), passwordField.getText()));
+        passwordField.setOnAction(e -> handleLogin(usernameField.getText().trim(), passwordField.getText()));
 
-        passwordField.setOnAction(e -> handleLogin(
-                usernameField.getText().trim(),
-                passwordField.getText()
-        ));
-
-        // Tautan Daftar Akun
         HBox registerBox = new HBox(5);
         registerBox.setAlignment(Pos.CENTER);
         Label lblBawah = new Label("Belum punya akun?");
@@ -123,14 +108,7 @@ public class LoginView {
         registerBox.getChildren().addAll(lblBawah, linkDaftar);
         VBox.setMargin(registerBox, new Insets(5, 0, 0, 0));
 
-        inputContainer.getChildren().addAll(
-                usernameLabel, usernameField,
-                passwordLabel, passwordField,
-                errorLabel,
-                loginBtn,
-                registerBox
-        );
-
+        inputContainer.getChildren().addAll(usernameLabel, usernameField, passwordLabel, passwordField, errorLabel, loginBtn, registerBox);
         formPanel.getChildren().addAll(welcomeLabel, subLabel, inputContainer);
 
         HBox root = new HBox(brandPanel, formPanel);
@@ -139,7 +117,6 @@ public class LoginView {
         return root;
     }
 
-    // Menjaga kompatibilitas jika dipanggil dari file Main eksternal
     public Scene buildScene() {
         return new Scene(buildLayout(), 840, 560);
     }
@@ -156,9 +133,9 @@ public class LoginView {
         }
         errorLabel.setText("");
         if ("admin".equals(user.getRole())) {
-            new app.admin.AdminDashboardView(stage, (app.model.Admin) user).show();
+            new ThreadHub.admin.AdminDashboardView(stage, (ThreadHub.model.Admin) user).show();
         } else {
-            new app.buyer.BuyerDashboardView(stage, (app.model.Buyer) user).show();
+            new ThreadHub.buyer.BuyerDashboardView(stage, (ThreadHub.model.Buyer) user).show();
         }
     }
 
@@ -208,8 +185,7 @@ public class LoginView {
             }
 
             DataStore ds = DataStore.getInstance();
-            boolean exists = ds.getAllUsers().stream()
-                    .anyMatch(u -> u.getUsername().equalsIgnoreCase(username));
+            boolean exists = ds.getAllUsers().stream().anyMatch(u -> u.getUsername().equalsIgnoreCase(username));
             if (exists) {
                 errLabel.setText("Username sudah terpakai, pilih yang lain.");
                 return;
@@ -219,11 +195,7 @@ public class LoginView {
             Buyer pembeliBaru = new Buyer(newId, username, password, nama);
             ds.tambahUser(pembeliBaru);
 
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Pendaftaran Berhasil");
-            alert.setHeaderText(null);
-            alert.setContentText("Akun berhasil dibuat! Silakan login menggunakan username dan password Anda.");
-            alert.showAndWait();
+            showSuccessDialog("Pendaftaran Berhasil", "Akun berhasil dibuat! Silakan login menggunakan username dan password Anda.");
             
             dialog.close();
         });
@@ -245,46 +217,22 @@ public class LoginView {
     }
 
     private void styleTextField(TextField tf) {
-        tf.setStyle(
-            "-fx-background-color: " + StyleKit.CARD_BG + ";" +
-            "-fx-text-fill: " + StyleKit.TEXT_PRIMARY + ";" +
-            "-fx-prompt-text-fill: " + StyleKit.TEXT_MUTED + ";" +
-            "-fx-border-color: " + StyleKit.BORDER + ";" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-padding: 10 14;" +
-            "-fx-font-size: 14px;"
-        );
+        String idleStyle = "-fx-background-color: " + StyleKit.CARD_BG + ";" +
+                           "-fx-text-fill: " + StyleKit.TEXT_PRIMARY + ";" +
+                           "-fx-prompt-text-fill: " + StyleKit.TEXT_MUTED + ";" +
+                           "-fx-border-color: " + StyleKit.BORDER + ";" +
+                           "-fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px;";
+        
+        String focusedStyle = idleStyle.replace("-fx-border-color: " + StyleKit.BORDER, "-fx-border-color: " + StyleKit.ACCENT);
+
+        tf.setStyle(idleStyle);
         tf.focusedProperty().addListener((obs, old, focused) -> {
-            if (focused) {
-                tf.setStyle(
-                    "-fx-background-color: " + StyleKit.CARD_BG + ";" +
-                    "-fx-text-fill: " + StyleKit.TEXT_PRIMARY + ";" +
-                    "-fx-prompt-text-fill: " + StyleKit.TEXT_MUTED + ";" +
-                    "-fx-border-color: " + StyleKit.ACCENT + ";" +
-                    "-fx-border-radius: 8;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-padding: 10 14;" +
-                    "-fx-font-size: 14px;"
-                );
-            } else {
-                tf.setStyle(
-                    "-fx-background-color: " + StyleKit.CARD_BG + ";" +
-                    "-fx-text-fill: " + StyleKit.TEXT_PRIMARY + ";" +
-                    "-fx-prompt-text-fill: " + StyleKit.TEXT_MUTED + ";" +
-                    "-fx-border-color: " + StyleKit.BORDER + ";" +
-                    "-fx-border-radius: 8;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-padding: 10 14;" +
-                    "-fx-font-size: 14px;"
-                );
-            }
+            tf.setStyle(focused ? focusedStyle : idleStyle);
         });
     }
 
     public void show() {
         stage.setTitle("ThreadHub — Login");
-        
         HBox layout = buildLayout();
         if (stage.getScene() != null) {
             stage.getScene().setRoot(layout);
@@ -292,9 +240,43 @@ public class LoginView {
             Scene scene = new Scene(layout, 840, 560);
             stage.setScene(scene);
         }
-        
         stage.setResizable(true);    
         stage.setMaximized(true);    
         stage.show();
+    }
+
+    // notif
+    private void showSuccessDialog(String titleText, String msg) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.TRANSPARENT);
+
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(30));
+        root.setAlignment(Pos.CENTER);
+        root.setStyle("-fx-background-color: #1a1c29; -fx-background-radius: 15; -fx-border-color: #2d3142; -fx-border-radius: 15; -fx-border-width: 2;");
+
+        Label icon = new Label("✅");
+        icon.setStyle("-fx-font-size: 48px;");
+
+        Label titleLabel = new Label(titleText);
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 20px;");
+
+        Label content = new Label(msg);
+        content.setStyle("-fx-text-fill: #a9b1d6; -fx-font-size: 14px;");
+        content.setTextAlignment(TextAlignment.CENTER);
+        content.setWrapText(true);
+
+        Button btnOk = StyleKit.primaryButton("OK");
+        btnOk.setMinWidth(120);
+        btnOk.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(icon, titleLabel, content, btnOk);
+
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.centerOnScreen();
+        dialog.showAndWait();
     }
 }
