@@ -221,6 +221,148 @@ public class AdminDashboardView {
     }
   }
 
+  private void showFormDialog(Produk existing) {
+    Stage dialog = new Stage();
+    dialog.setTitle(existing == null ? "Tambah Produk" : "Edit Produk");
+    dialog.initOwner(stage);
+
+    VBox form = new VBox(14);
+    form.setPadding(new Insets(30));
+    form.setPrefWidth(420);
+    form.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
+
+    Label title = StyleKit.titleLabel(existing == null ? "Tambah Produk Baru" : "Edit Produk", 20);
+    TextField tfNama = dialogField("Nama Produk", existing != null ? existing.getNama() : "");
+        
+    ComboBox<String> cbGender = new ComboBox<>();
+    cbGender.getItems().addAll("PRIA", "WANITA", "ANAK-ANAK");
+    cbGender.setPrefWidth(Double.MAX_VALUE);
+    cbGender.setStyle(
+      "-fx-background-color: " + StyleKit.CARD_BG + ";" +
+        "-fx-border-color: " + StyleKit.BORDER + ";" +
+        "-fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 4 8;"
+    );
+        
+    cbGender.setButtonCell(new ListCell<>() {
+      @Override protected void updateItem(String item, boolean empty) {
+        super.updateItem(item, empty);
+        setText(empty ? null : item);
+        setTextFill(Color.web(StyleKit.TEXT_CONTRAST));
+        setStyle("-fx-background-color: transparent;");
+        }
+    });
+    cbGender.setCellFactory(lv -> new ListCell<>() {
+      @Override protected void updateItem(String item, boolean empty) {
+        super.updateItem(item, empty);
+        setText(empty ? null : item);
+        setTextFill(Color.web(StyleKit.TEXT_CONTRAST));
+        setStyle("-fx-background-color: " + StyleKit.CARD_BG + ";");
+      }
+    });
+
+    cbGender.setValue(existing != null && existing.getGender() != null ? existing.getGender().toUpperCase() : "PRIA");
+        
+    VBox genderBox = new VBox(5, new Label("Gender") {{ setTextFill(Color.web(StyleKit.TEXT_MUTED)); setFont(Font.font(StyleKit.FONT_FAMILY, 12)); }}, cbGender);
+
+    final String[] selectedImagePath = { existing != null ? existing.getImagePath() : null };
+    Button btnUpload = StyleKit.outlineButton("Pilih Foto...");
+    btnUpload.setStyle("-fx-font-size: 11px; -fx-padding: 6 12;");
+    Label lblFoto = new Label(selectedImagePath[0] == null ? "Belum ada foto" : "Foto terpilih");
+    lblFoto.setTextFill(Color.web(StyleKit.TEXT_MUTED));
+        
+    btnUpload.setOnAction(e -> {
+      FileChooser fc = new FileChooser();
+      fc.setTitle("Pilih Foto Produk");
+      fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+      File file = fc.showOpenDialog(dialog);
+      if (file != null) {
+        selectedImagePath[0] = file.toURI().toString(); 
+        lblFoto.setText(file.getName());
+      }
+    });
+    HBox fotoBox = new HBox(12, btnUpload, lblFoto);
+    fotoBox.setAlignment(Pos.CENTER_LEFT);
+
+    TextField tfKategori  = dialogField("Kategori", existing != null ? existing.getKategori() : "");
+    TextField tfUkuran    = dialogField("Ukuran",       existing != null ? existing.getUkuran() : "");
+    TextField tfWarna     = dialogField("Warna",        existing != null ? existing.getWarna() : "");
+    TextField tfHarga     = dialogField("Harga (Rp)",   existing != null ? String.valueOf((int)existing.getHarga()) : "");
+    TextField tfStok      = dialogField("Stok",         existing != null ? String.valueOf(existing.getStok()) : "");
+        
+    TextArea taDeskripsi = new TextArea(existing != null ? existing.getDeskripsi() : "");
+    taDeskripsi.setPromptText("Deskripsi produk");
+    taDeskripsi.setPrefRowCount(3);
+    taDeskripsi.setWrapText(true);
+    taDeskripsi.setStyle(
+        "-fx-control-inner-background: " + StyleKit.CARD_BG + ";" +
+        "-fx-background-color: " + StyleKit.BORDER + ", " + StyleKit.CARD_BG + ";" +
+        "-fx-background-insets: 0, 1;" +
+        "-fx-text-fill: " + StyleKit.TEXT_CONTRAST + ";" +
+        "-fx-prompt-text-fill: " + StyleKit.TEXT_MUTED + ";" +
+        "-fx-border-radius: 8; -fx-background-radius: 8;"
+    );
+
+    Label errLabel = new Label("");
+    errLabel.setTextFill(Color.web(StyleKit.ACCENT));
+
+    Button btnSimpan = StyleKit.primaryButton("Simpan");
+    btnSimpan.setMaxWidth(Double.MAX_VALUE);
+    btnSimpan.setOnAction(e -> {
+        try {
+          String nama      = tfNama.getText().trim();
+          String gender    = cbGender.getValue();
+          String kategori  = tfKategori.getText().trim();
+          String ukuran    = tfUkuran.getText().trim();
+          String warna     = tfWarna.getText().trim();
+          String deskripsi = taDeskripsi.getText().trim();
+          double harga     = Double.parseDouble(tfHarga.getText().trim());
+          int stok         = Integer.parseInt(tfStok.getText().trim());
+          String imgPath   = selectedImagePath[0];
+          if (nama.isEmpty() || kategori.isEmpty()) {
+            errLabel.setText("Nama dan kategori wajib diisi.");
+              return;
+          }
+                
+        if (existing == null) {
+          Produk baru = new Produk(ds.generateProdukId(), nama, deskripsi, kategori, harga, stok, ukuran, warna, gender, imgPath);
+          ds.tambahProduk(baru);
+        } else {
+          existing.setNama(nama);
+          existing.setGender(gender);
+          existing.setKategori(kategori);
+          existing.setUkuran(ukuran);
+          existing.setWarna(warna);
+          existing.setDeskripsi(deskripsi);
+          existing.setHarga(harga);
+          existing.setStok(stok);
+          existing.setImagePath(imgPath); 
+                    
+          ds.simpanDataProduk(); 
+        }
+        produkData.setAll(ds.getAllProduk());
+        dialog.close();
+      } catch (NumberFormatException ex) {
+        errLabel.setText("Harga dan stok harus berupa angka.");
+      }
+    });
+
+    form.getChildren().addAll(
+      title, StyleKit.hSeparator(),
+      tfNama, genderBox, 
+      new Label("Foto Produk") {{ setTextFill(Color.web(StyleKit.TEXT_MUTED)); setFont(Font.font(StyleKit.FONT_FAMILY, 12)); }},
+      fotoBox, tfKategori, tfUkuran, tfWarna,
+      new Label("Deskripsi") {{ setTextFill(Color.web(StyleKit.TEXT_MUTED)); setFont(Font.font(StyleKit.FONT_FAMILY, 12)); }},
+      taDeskripsi, tfHarga, tfStok, errLabel, btnSimpan
+    );
+
+    ScrollPane scrollPane = new ScrollPane(form);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setStyle("-fx-background: " + StyleKit.DARK_BG + "; -fx-border-color: transparent;");
+
+    dialog.setScene(new Scene(scrollPane, 440, 700));
+    dialog.showAndWait();
+  }
+  
   private void showFormDialog(Produk existing) {}
   private void hapusProduk(Produk p) {}
   private VBox buildPenggunaPanel() { return new VBox(); }
