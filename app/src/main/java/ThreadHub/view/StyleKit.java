@@ -1,7 +1,10 @@
 package ThreadHub.view;
 
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.
@@ -105,4 +108,24 @@ public class StyleKit {
     lbl.setTextFill(Color.web(TEXT_PRIMARY));
     return lbl;
   }
+  public static VBox card(double padding) {
+    VBox box = new VBox(10);
+    box.setPadding(new Insets(padding));
+      box.setStyle(
+        "-fx-background-color: " + CARD_BG + ";" +
+        "-fx-background-radius: " + RADIUS + ";" +
+        "-fx-border-color: " + BORDER + ";" +
+        "-fx-border-radius: " + RADIUS + ";" +
+        "-fx-border-width: 1;"
+      );
+    return box;
+    }
+  public static Region hSeparator() {
+    Region sep = new Region();
+    sep.setPrefHeight(1);
+    sep.setStyle(
+      "-fx-background-color: " + BORDER + ";"
+    );
+    return sep;
+    }
 }
