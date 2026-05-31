@@ -186,7 +186,7 @@ public class AdminDashboardView {
           "-fx-padding: 6 14; -fx-background-radius: 8; -fx-cursor: hand;"
         );
         btnEdit.setOnAction(e -> showFormDialog(getTableView().getItems().get(getIndex())));
-        btnHapus.setOnAction(e -> hapusProduk(getTableView().getItems().get(getIndex())));
+        btnHapus.setOnAction(e -> hapusProduk1(getTableView().getItems().get(getIndex())));
       }
       @Override protected void updateItem(Void v, boolean empty) {
         super.updateItem(v, empty);
@@ -363,6 +363,33 @@ public class AdminDashboardView {
     dialog.showAndWait();
   }
   
+  private TextField dialogField(String prompt, String value) {
+    TextField tf = new TextField(value);
+    tf.setPromptText(prompt);
+    tf.setStyle(
+      "-fx-background-color: " + StyleKit.CARD_BG + ";" +
+      "-fx-text-fill: " + StyleKit.TEXT_CONTRAST + ";" +
+      "-fx-border-color: " + StyleKit.BORDER + ";" +
+      "-fx-border-radius: 8; -fx-background-radius: 8;" +
+      "-fx-padding: 9 12; -fx-font-size: 13px;" +
+      "-fx-prompt-text-fill: " + StyleKit.TEXT_MUTED + ";"
+    );
+    return tf;
+  }
+
+  private void hapusProduk(Produk p) {
+    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+      alert.setTitle("Hapus Produk");
+      alert.setHeaderText("Hapus " + p.getNama() + "?");
+      alert.setContentText("Tindakan ini tidak dapat dibatalkan.");
+      alert.showAndWait().ifPresent(btn -> {
+        if (btn == ButtonType.OK) {
+            ds.hapusProduk(p.getId());
+            produkData.setAll(ds.getAllProduk());
+        }
+    });
+  }
+
   private void showFormDialog(Produk existing) {}
   private void hapusProduk(Produk p) {}
   private VBox buildPenggunaPanel() { return new VBox(); }
