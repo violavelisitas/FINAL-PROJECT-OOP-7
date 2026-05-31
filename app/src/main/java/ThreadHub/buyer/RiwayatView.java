@@ -8,117 +8,117 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
+
 import java.util.List;
 
 public class RiwayatView {
-  private final Buyer buyer;
-  private final DataStore ds = DataStore.getInstance();
 
-  public RiwayatView(Buyer buyer) {
-    this.buyer = buyer;
-  }
+    private final Buyer buyer;
+    private final DataStore ds = DataStore.getInstance();
 
-  public VBox build() {
-    VBox content = new VBox(20);
-    content.setPadding(new Insets(30));
-    content.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
-
-    Label title = StyleKit.titleLabel("📋 Riwayat Pembelian", 22);
-
-    List<Transaksi> list = ds.getTransaksiBuyer(buyer);
-
-    if (list.isEmpty()) {
-      Label kosong = StyleKit.mutedLabel("Belum ada riwayat pembelian.");
-      kosong.setFont(Font.font(StyleKit.FONT_FAMILY, 16));
-      kosong.setPadding(new Insets(40, 0, 0, 0));
-      content.getChildren().addAll(title, kosong);
-      return content;
+    public RiwayatView(Buyer buyer) {
+        this.buyer = buyer;
     }
 
-    ScrollPane scroll = new ScrollPane();
-    scroll.setFitToWidth(true);
-    scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-    VBox.setVgrow(scroll, Priority.ALWAYS);
+    public VBox build() {
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(30));
+        content.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
 
-    VBox trxList = new VBox(16);
-    trxList.setPadding(new Insets(4, 0, 0, 0));
+        Label title = StyleKit.titleLabel("📋 Riwayat Pembelian", 22);
 
-    // Tampilkan dari yang terbaru
-    for (int i = list.size() - 1; i >= 0; i--) {
-      trxList.getChildren().add(buildTrxCard(list.get(i)));
-    }
-    scroll.setContent(trxList);
+        List<Transaksi> list = ds.getTransaksiBuyer(buyer);
 
-    content.getChildren().addAll(title, StyleKit.hSeparator(), scroll);
-    return content;
-  }
+        if (list.isEmpty()) {
+            Label kosong = StyleKit.mutedLabel("Belum ada riwayat pembelian.");
+            kosong.setFont(Font.font(StyleKit.FONT_FAMILY, 16));
+            kosong.setPadding(new Insets(40, 0, 0, 0));
+            content.getChildren().addAll(title, kosong);
+            return content;
+        }
 
-  private VBox buildTrxCard(Transaksi trx) {
-    VBox card = StyleKit.card(18);
-    card.setSpacing(10);
+        ScrollPane scroll = new ScrollPane();
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
 
-    // Header transaksi
-    HBox header = new HBox(12);
-    header.setAlignment(Pos.CENTER_LEFT);
+        VBox trxList = new VBox(16);
+        trxList.setPadding(new Insets(4, 0, 0, 0));
 
-    Label idLabel = new Label("#TRX-" + String.format("%04d", trx.getId()));
-    idLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 15));
-    idLabel.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
+        for (int i = list.size() - 1; i >= 0; i--) {
+            trxList.getChildren().add(buildTrxCard(list.get(i)));
+        }
+        scroll.setContent(trxList);
 
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-
-    Label waktu = StyleKit.mutedLabel("🕐 " + trx.getWaktuFormatted());
-
-    Label statusBadge = new Label(trx.getStatus());
-    statusBadge.setStyle(
-      "-fx-background-color: " + StyleKit.SUCCESS + ";" +
-      "-fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold;" +
-      "-fx-padding: 3 10; -fx-background-radius: 6;"
-    );
-    header.getChildren().addAll(idLabel, spacer, waktu, statusBadge);
-
-    // Item-item dalam transaksi
-    VBox itemsBox = new VBox(6);
-    for (ItemKeranjang item : trx.getItems()) {
-      HBox itemRow = new HBox(10);
-      itemRow.setAlignment(Pos.CENTER_LEFT);
-
-      Label nama = new Label("• " + item.getProduk().getNama());
-      nama.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
-      nama.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
-
-      Label qty = StyleKit.mutedLabel("x" + item.getJumlah());
-
-      Region sp = new Region();
-      HBox.setHgrow(sp, Priority.ALWAYS);
-
-      Label sub = new Label(item.getSubtotalFormatted());
-      sub.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 13));
-      sub.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
-
-      itemRow.getChildren().addAll(nama, qty, sp, sub);
-      itemsBox.getChildren().add(itemRow);
+        content.getChildren().addAll(title, StyleKit.hSeparator(), scroll);
+        return content;
     }
 
-    // Total
-    HBox totalRow = new HBox();
-    totalRow.setAlignment(Pos.CENTER_RIGHT);
-    Label totalKey = new Label("TOTAL  ");
-    totalKey.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 14));
-    totalKey.setTextFill(Color.web(StyleKit.TEXT_MUTED));
-    Label totalVal = new Label(trx.getTotalFormatted());
-    totalVal.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 18));
-    totalVal.setTextFill(Color.web(StyleKit.ACCENT));
-    totalRow.getChildren().addAll(totalKey, totalVal);
+    private VBox buildTrxCard(Transaksi trx) {
+        VBox card = StyleKit.card(18);
+        card.setSpacing(10);
 
-    card.getChildren().addAll(
-      header,
-      StyleKit.hSeparator(),
-      itemsBox,
-      StyleKit.hSeparator(),
-      totalRow
-    );
-    return card;
-  }
+        HBox header = new HBox(12);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label idLabel = new Label("#TRX-" + String.format("%04d", trx.getId()));
+        idLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 15));
+        idLabel.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label waktu = StyleKit.mutedLabel("🕐 " + trx.getWaktuFormatted());
+
+        Label statusBadge = new Label(trx.getStatus());
+        statusBadge.setStyle(
+            "-fx-background-color: " + StyleKit.SUCCESS + ";" +
+            "-fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold;" +
+            "-fx-padding: 3 10; -fx-background-radius: 6;"
+        );
+        header.getChildren().addAll(idLabel, spacer, waktu, statusBadge);
+
+        // Item-item dalam transaksi
+        VBox itemsBox = new VBox(6);
+        for (ItemKeranjang item : trx.getItems()) {
+            HBox itemRow = new HBox(10);
+            itemRow.setAlignment(Pos.CENTER_LEFT);
+
+            Label nama = new Label("• " + item.getProduk().getNama());
+            nama.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
+            nama.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
+
+            Label qty = StyleKit.mutedLabel("x" + item.getJumlah());
+
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+
+            Label sub = new Label(item.getSubtotalFormatted());
+            sub.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 13));
+            sub.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
+
+            itemRow.getChildren().addAll(nama, qty, sp, sub);
+            itemsBox.getChildren().add(itemRow);
+        }
+
+        // Total
+        HBox totalRow = new HBox();
+        totalRow.setAlignment(Pos.CENTER_RIGHT);
+        Label totalKey = new Label("TOTAL  ");
+        totalKey.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 14));
+        totalKey.setTextFill(Color.web(StyleKit.TEXT_MUTED));
+        Label totalVal = new Label(trx.getTotalFormatted());
+        totalVal.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 18));
+        totalVal.setTextFill(Color.web(StyleKit.ACCENT));
+        totalRow.getChildren().addAll(totalKey, totalVal);
+
+        card.getChildren().addAll(
+                header,
+                StyleKit.hSeparator(),
+                itemsBox,
+                StyleKit.hSeparator(),
+                totalRow
+        );
+        return card;
+    }
 }

@@ -10,11 +10,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
+import javafx.stage.Stage;
+import javafx.stage.Modality;
+import javafx.stage.StageStyle;
+import javafx.scene.Scene;
 
 public class ProdukDetailView {
 
     private final BuyerDashboardView dashboard;
-    private final Produk              produk;
+    private final Produk             produk;
     private final KeranjangController keranjang;
 
     public ProdukDetailView(BuyerDashboardView dashboard, Produk produk, KeranjangController keranjang) {
@@ -28,15 +32,11 @@ public class ProdukDetailView {
         content.setPadding(new Insets(36));
         content.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
 
-        // Tombol kembali
         Button btnBack = StyleKit.outlineButton("← Kembali");
         btnBack.setOnAction(e -> dashboard.showProdukView());
-
-        // Layout dua kolom
         HBox body = new HBox(32);
         body.setAlignment(Pos.TOP_LEFT);
 
-        // ── Kiri: Gambar Produk (Diperbarui) ──────────────────────────────────
         StackPane imgBox = new StackPane();
         imgBox.setAlignment(Pos.CENTER);
         imgBox.setPrefSize(300, 350);
@@ -60,7 +60,7 @@ public class ProdukDetailView {
             imgBox.getChildren().add(emoji);
         }
 
-        // ── Kanan: Info Produk ────────────────────────────────────────────────
+        //Info Produk
         VBox info = new VBox(14);
         info.setMaxWidth(500);
         HBox.setHgrow(info, Priority.ALWAYS);
@@ -140,10 +140,38 @@ public class ProdukDetailView {
     }
 
     private void showInfo(String title, String msg) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.TRANSPARENT);
+
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(30));
+        root.setAlignment(Pos.CENTER);
+        
+        root.setStyle("-fx-background-color: #1a1c29; -fx-background-radius: 15; -fx-border-color: #2d3142; -fx-border-radius: 15; -fx-border-width: 2;");
+
+        Label icon = new Label("✅");
+        icon.setStyle("-fx-font-size: 48px;");
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 20px;");
+
+        Label content = new Label(msg);
+        content.setStyle("-fx-text-fill: #a9b1d6; -fx-font-size: 14px;");
+        content.setTextAlignment(TextAlignment.CENTER);
+        content.setWrapText(true);
+
+        Button btnOk = StyleKit.primaryButton("OK");
+        btnOk.setMinWidth(120);
+        btnOk.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(icon, titleLabel, content, btnOk);
+
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+        
+        dialog.setScene(scene);
+        dialog.centerOnScreen();
+        dialog.showAndWait();
     }
 }
