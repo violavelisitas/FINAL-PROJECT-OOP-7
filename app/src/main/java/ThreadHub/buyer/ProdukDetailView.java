@@ -10,168 +10,143 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
-import javafx.stage.Stage;
-import javafx.stage.Modality;
-import javafx.stage.StageStyle;
-import javafx.scene.Scene;
 
 public class ProdukDetailView {
+  private final BuyerDashboardView dashboard;
+  private final Produk produk;
+  private final KeranjangController keranjang;
 
-    private final BuyerDashboardView dashboard;
-    private final Produk             produk;
-    private final KeranjangController keranjang;
+  public ProdukDetailView(BuyerDashboardView dashboard, Produk produk, KeranjangController keranjang) {
+    this.dashboard = dashboard;
+    this.produk = produk;
+    this.keranjang = keranjang;
+  }
 
-    public ProdukDetailView(BuyerDashboardView dashboard, Produk produk, KeranjangController keranjang) {
-        this.dashboard = dashboard;
-        this.produk    = produk;
-        this.keranjang = keranjang;
+  public ScrollPane build() {
+    VBox content = new VBox(24);
+    content.setPadding(new Insets(36));
+    content.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
+
+    Button btnBack = StyleKit.outlineButton("Kembali");
+    btnBack.setOnAction(e -> dashboard.showProdukView());
+
+    HBox body = new HBox(32);
+    body.setAlignment(Pos.TOP_LEFT);
+
+    StackPane imgBox = new StackPane();
+    imgBox.setAlignment(Pos.CENTER);
+    imgBox.setPrefSize(300, 350);
+    imgBox.setStyle("-fx-background-color: " + StyleKit.SIDEBAR_BG + "; -fx-background-radius: 14;");
+
+    if (produk.getImagePath() != null && !produk.getImagePath().isBlank()) {
+      try {
+        ImageView imgView = new ImageView(new Image(produk.getImagePath()));
+        imgView.setFitWidth(300);
+        imgView.setFitHeight(350);
+        imgView.setPreserveRatio(true);
+        imgBox.getChildren().add(imgView);
+      } catch (Exception ex) {
+        Label emoji = new Label(emojiKategori(produk.getKategori()));
+        emoji.setFont(Font.font(100));
+        imgBox.getChildren().add(emoji);
+      }
+    } else {
+      Label emoji = new Label(emojiKategori(produk.getKategori()));
+      emoji.setFont(Font.font(100));
+      imgBox.getChildren().add(emoji);
     }
 
-    public ScrollPane build() {
-        VBox content = new VBox(24);
-        content.setPadding(new Insets(36));
-        content.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
+    VBox info = new VBox(14);
+    info.setMaxWidth(500);
+    HBox.setHgrow(info, Priority.ALWAYS);
 
-        Button btnBack = StyleKit.outlineButton("← Kembali");
-        btnBack.setOnAction(e -> dashboard.showProdukView());
-        HBox body = new HBox(32);
-        body.setAlignment(Pos.TOP_LEFT);
+    Label badgeKat = new Label(produk.getKategori().toUpperCase());
+    badgeKat.setStyle("-fx-background-color: " + StyleKit.SIDEBAR_BG + "; -fx-text-fill: " + StyleKit.ACCENT + "; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 12; -fx-background-radius: 6;");
 
-        StackPane imgBox = new StackPane();
-        imgBox.setAlignment(Pos.CENTER);
-        imgBox.setPrefSize(300, 350);
-        imgBox.setStyle("-fx-background-color: " + StyleKit.SIDEBAR_BG + "; -fx-background-radius: 14;");
+    Label nama = StyleKit.titleLabel(produk.getNama(), 26);
+    nama.setWrapText(true);
 
-        if (produk.getImagePath() != null && !produk.getImagePath().isBlank()) {
-            try {
-                ImageView imgView = new ImageView(new Image(produk.getImagePath()));
-                imgView.setFitWidth(300);
-                imgView.setFitHeight(350);
-                imgView.setPreserveRatio(true);
-                imgBox.getChildren().add(imgView);
-            } catch (Exception ex) {
-                Label emoji = new Label(emojiKategori(produk.getKategori()));
-                emoji.setFont(Font.font(100));
-                imgBox.getChildren().add(emoji);
-            }
-        } else {
-            Label emoji = new Label(emojiKategori(produk.getKategori()));
-            emoji.setFont(Font.font(100));
-            imgBox.getChildren().add(emoji);
-        }
+    Label harga = new Label(produk.getHargaFormatted());
+    harga.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 28));
+    harga.setTextFill(Color.web(StyleKit.ACCENT));
 
-        //Info Produk
-        VBox info = new VBox(14);
-        info.setMaxWidth(500);
-        HBox.setHgrow(info, Priority.ALWAYS);
+    GridPane attrs = new GridPane();
+    attrs.setHgap(20); attrs.setVgap(8);
+    addAttr(attrs, 0, "Ukuran", produk.getUkuran());
+    addAttr(attrs, 1, "Warna", produk.getWarna());
+    addAttr(attrs, 2, "Stok", produk.isAvailable() ? produk.getStok() + " tersedia" : "Habis");
 
-        Label badgeKat = new Label(produk.getKategori().toUpperCase());
-        badgeKat.setStyle("-fx-background-color: " + StyleKit.SIDEBAR_BG + "; -fx-text-fill: " + StyleKit.ACCENT + "; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 12; -fx-background-radius: 6;");
+    Label deskLabel = new Label("Deskripsi");
+    deskLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 14));
+    deskLabel.setTextFill(Color.web(StyleKit.TEXT_MUTED));
 
-        Label nama = StyleKit.titleLabel(produk.getNama(), 26);
-        nama.setWrapText(true);
+    Label deskripsi = new Label(produk.getDeskripsi());
+    deskripsi.setWrapText(true);
+    deskripsi.setFont(Font.font(StyleKit.FONT_FAMILY, 14));
+    deskripsi.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
 
-        Label harga = new Label(produk.getHargaFormatted());
-        harga.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 28));
-        harga.setTextFill(Color.web(StyleKit.ACCENT));
+    Label jumlahLabel = new Label("Jumlah");
+    jumlahLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 14));
+    jumlahLabel.setTextFill(Color.web(StyleKit.TEXT_MUTED));
 
-        GridPane attrs = new GridPane();
-        attrs.setHgap(20); attrs.setVgap(8);
-        addAttr(attrs, 0, "Ukuran", produk.getUkuran());
-        addAttr(attrs, 1, "Warna",  produk.getWarna());
-        addAttr(attrs, 2, "Stok",   produk.isAvailable() ? produk.getStok() + " tersedia" : "Habis");
+    Spinner<Integer> spinner = new Spinner<>(1, Math.max(1, produk.getStok()), 1);
+    spinner.setPrefWidth(100);
+    spinner.setStyle("-fx-background-color: " + StyleKit.CARD_BG + ";");
 
-        Label deskLabel = new Label("Deskripsi");
-        deskLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 14));
-        deskLabel.setTextFill(Color.web(StyleKit.TEXT_MUTED));
+    Button btnKeranjang = StyleKit.primaryButton("Tambah ke Keranjang");
+    btnKeranjang.setDisable(!produk.isAvailable());
+    btnKeranjang.setOnAction(e -> {
+      keranjang.tambahItem(produk, spinner.getValue());
+      dashboard.updateCartBadge();
+      showInfo("Berhasil!", spinner.getValue() + "x '" + produk.getNama() + "' ditambahkan.");
+    });
 
-        Label deskripsi = new Label(produk.getDeskripsi());
-        deskripsi.setWrapText(true);
-        deskripsi.setFont(Font.font(StyleKit.FONT_FAMILY, 14));
-        deskripsi.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
+    info.getChildren().addAll(
+      badgeKat, nama, harga,
+      StyleKit.hSeparator(),
+      attrs,
+      StyleKit.hSeparator(),
+      deskLabel, deskripsi,
+      StyleKit.hSeparator(),
+      jumlahLabel, spinner, btnKeranjang
+    );
 
-        Label jumlahLabel = new Label("Jumlah");
-        jumlahLabel.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 14));
-        jumlahLabel.setTextFill(Color.web(StyleKit.TEXT_MUTED));
+    body.getChildren().addAll(imgBox, info);
+    content.getChildren().addAll(btnBack, body);
 
-        Spinner<Integer> spinner = new Spinner<>(1, Math.max(1, produk.getStok()), 1);
-        spinner.setPrefWidth(100);
-        spinner.setStyle("-fx-background-color: " + StyleKit.CARD_BG + ";");
+    ScrollPane scroll = new ScrollPane(content);
+    scroll.setFitToWidth(true);
+    scroll.setStyle("-fx-background-color: " + StyleKit.DARK_BG + "; -fx-background: " + StyleKit.DARK_BG + ";");
+    return scroll;
+  }
 
-        Button btnKeranjang = StyleKit.primaryButton("🛒  Tambah ke Keranjang");
-        btnKeranjang.setDisable(!produk.isAvailable());
-        btnKeranjang.setOnAction(e -> {
-            keranjang.tambahItem(produk, spinner.getValue());
-            dashboard.updateCartBadge();
-            showInfo("Berhasil!", spinner.getValue() + "x '" + produk.getNama() + "' ditambahkan.");
-        });
+  private void addAttr(GridPane grid, int row, String key, String value) {
+    Label k = new Label(key + ":");
+    k.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
+    k.setTextFill(Color.web(StyleKit.TEXT_MUTED));
+    Label v = new Label(value);
+    v.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 13));
+    v.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
+    grid.add(k, 0, row);
+    grid.add(v, 1, row);
+  }
 
-        info.getChildren().addAll(badgeKat, nama, harga, StyleKit.hSeparator(), attrs, StyleKit.hSeparator(), deskLabel, deskripsi, StyleKit.hSeparator(), jumlahLabel, spinner, btnKeranjang);
-        
-        body.getChildren().addAll(imgBox, info);
-        content.getChildren().addAll(btnBack, body);
+  private String emojiKategori(String kategori) {
+    return switch (kategori.toLowerCase()) {
+      case "kaos" -> "👕";
+      case "kemeja" -> "👔";
+      case "celana" -> "👖";
+      case "jaket" -> "🧥";
+      case "hoodie" -> "🥷";
+      default -> "?";
+    };
+  }
 
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: " + StyleKit.DARK_BG + "; -fx-background: " + StyleKit.DARK_BG + ";");
-        return scroll;
-    }
-
-    private void addAttr(GridPane grid, int row, String key, String value) {
-        Label k = new Label(key + ":");
-        k.setFont(Font.font(StyleKit.FONT_FAMILY, 13));
-        k.setTextFill(Color.web(StyleKit.TEXT_MUTED));
-        Label v = new Label(value);
-        v.setFont(Font.font(StyleKit.FONT_FAMILY, FontWeight.BOLD, 13));
-        v.setTextFill(Color.web(StyleKit.TEXT_PRIMARY));
-        grid.add(k, 0, row);
-        grid.add(v, 1, row);
-    }
-
-    private String emojiKategori(String kategori) {
-        return switch (kategori.toLowerCase()) {
-            case "kaos" -> "👕";
-            case "kemeja" -> "👔";
-            case "celana" -> "👖";
-            case "jaket" -> "🧥";
-            case "hoodie" -> "🥷";
-            default -> "🛍";
-        };
-    }
-
-    private void showInfo(String title, String msg) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initStyle(StageStyle.TRANSPARENT);
-
-        VBox root = new VBox(15);
-        root.setPadding(new Insets(30));
-        root.setAlignment(Pos.CENTER);
-        
-        root.setStyle("-fx-background-color: #1a1c29; -fx-background-radius: 15; -fx-border-color: #2d3142; -fx-border-radius: 15; -fx-border-width: 2;");
-
-        Label icon = new Label("✅");
-        icon.setStyle("-fx-font-size: 48px;");
-
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 20px;");
-
-        Label content = new Label(msg);
-        content.setStyle("-fx-text-fill: #a9b1d6; -fx-font-size: 14px;");
-        content.setTextAlignment(TextAlignment.CENTER);
-        content.setWrapText(true);
-
-        Button btnOk = StyleKit.primaryButton("OK");
-        btnOk.setMinWidth(120);
-        btnOk.setOnAction(e -> dialog.close());
-
-        root.getChildren().addAll(icon, titleLabel, content, btnOk);
-
-        Scene scene = new Scene(root);
-        scene.setFill(Color.TRANSPARENT);
-        
-        dialog.setScene(scene);
-        dialog.centerOnScreen();
-        dialog.showAndWait();
-    }
+  private void showInfo(String title, String msg) {
+    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(msg);
+    alert.showAndWait();
+  }
 }
