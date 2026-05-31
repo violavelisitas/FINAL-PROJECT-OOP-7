@@ -12,18 +12,18 @@ public class DataStore {
     private final List<User>         users         = new ArrayList<>();
     private final List<Produk>       produkList    = new ArrayList<>();
     private final List<Transaksi>    transaksiList = new ArrayList<>();
-    private final List<OutfitBundle> outfitList    = new ArrayList<>(); // TAMBAHAN
+    private final List<OutfitBundle> outfitList    = new ArrayList<>();
 
     private static final String FILE_PRODUK = "data_produk.dat";
     private static final String FILE_TRANSAKSI = "data_transaksi.dat";
     private static final String FILE_USER = "data_user.dat";
-    private static final String FILE_OUTFIT = "data_outfit.dat"; // TAMBAHAN
+    private static final String FILE_OUTFIT = "data_outfit.dat";
 
     private DataStore() {
         muatDataUser();      
         muatDataProduk(); 
         muatDataTransaksi(); 
-        muatDataOutfit(); // TAMBAHAN
+        muatDataOutfit();
     }
 
     public static DataStore getInstance() {
@@ -33,7 +33,7 @@ public class DataStore {
         return instance;
     }
 
-    // ─── User ────────────────────────────────────────────────────────────────
+    // User
 
     @SuppressWarnings("unchecked")
     private void muatDataUser() {
@@ -95,7 +95,7 @@ public class DataStore {
         return users.stream().mapToInt(User::getId).max().orElse(0) + 1;
     }
 
-    // ─── Produk ──────────────────────────────────────────────────────────────
+    //Produk
 
     @SuppressWarnings("unchecked")
     private void muatDataProduk() {
@@ -163,7 +163,7 @@ public class DataStore {
         return produkList.stream().mapToInt(Produk::getId).max().orElse(0) + 1;
     }
 
-    // ─── Transaksi ───────────────────────────────────────────────────────────
+    //Transaksi
     
     @SuppressWarnings("unchecked")
     private void muatDataTransaksi() {

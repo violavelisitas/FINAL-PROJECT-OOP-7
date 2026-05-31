@@ -43,13 +43,33 @@ public class KeranjangController {
         return items.isEmpty();
     }
 
-    public double getTotal() {
+    //LOGIKA PERHITUNGAN
+    public double getSubtotal() {
         return items.stream().mapToDouble(ItemKeranjang::getSubtotal).sum();
     }
 
-    public String getTotalFormatted() {
-        return String.format("Rp %,.0f", getTotal());
+    public double getDiskon() {
+        return getSubtotal() > 1000000 ? getSubtotal() * 0.05 : 0;
     }
+
+    public double getPpn() {
+        return (getSubtotal() - getDiskon()) * 0.11;
+    }
+
+    public double getPph() {
+        double hargaSetelahDiskon = getSubtotal() - getDiskon();
+        return hargaSetelahDiskon > 2000000 ? hargaSetelahDiskon * 0.015 : 0;
+    }
+
+    public double getTotal() {
+        return getSubtotal() - getDiskon() + getPpn() + getPph();
+    }
+
+    public String getSubtotalFormatted() { return String.format("Rp %,.0f", getSubtotal()); }
+    public String getDiskonFormatted() { return String.format("-Rp %,.0f", getDiskon()); }
+    public String getPpnFormatted() { return String.format("Rp %,.0f", getPpn()); }
+    public String getPphFormatted() { return String.format("Rp %,.0f", getPph()); }
+    public String getTotalFormatted() { return String.format("Rp %,.0f", getTotal()); }
 
     public Transaksi checkout() {
         if (isEmpty()) return null;
@@ -64,10 +84,10 @@ public class KeranjangController {
         }
 
         int newId = DataStore.getInstance().generateTransaksiId();
-        Transaksi trx = new Transaksi(newId, buyer, items);
+        
+        Transaksi trx = new Transaksi(newId, buyer, items, getSubtotal(), getDiskon(), getPpn(), getPph(), getTotal());
         
         DataStore.getInstance().tambahTransaksi(trx);
-        
         DataStore.getInstance().simpanDataProduk(); 
         
         kosongkanKeranjang();

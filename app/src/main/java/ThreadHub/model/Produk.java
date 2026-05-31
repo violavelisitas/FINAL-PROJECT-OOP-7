@@ -57,7 +57,7 @@ public class Produk implements Serializable {
     }
 
     public String getHargaFormatted() {
-        return String.format("Rp %..0f", harga);
+        return String.format("Rp %,.0f", harga);
     }
 
     @Override

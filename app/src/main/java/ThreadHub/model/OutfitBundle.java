@@ -44,6 +44,6 @@ public class OutfitBundle implements Serializable {
     }
 
     public String getTotalHargaFormatted() {
-        return String.format("Rp %..0f", getTotalHarga());
+        return String.format("Rp %,.0f", getTotalHarga());
     }
 }
