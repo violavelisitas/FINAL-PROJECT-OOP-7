@@ -390,9 +390,94 @@ public class AdminDashboardView {
     });
   }
 
-  private void showFormDialog(Produk existing) {}
-  private void hapusProduk(Produk p) {}
-  private VBox buildPenggunaPanel() { return new VBox(); }
+  private VBox buildPenggunaPanel() {
+    VBox content = new VBox(18);
+      content.setPadding(new Insets(30));
+      content.setStyle("-fx-background-color: " + StyleKit.DARK_BG + ";");
+
+      HBox header = new HBox(14);
+      header.setAlignment(Pos.CENTER_LEFT);
+      Label title = StyleKit.titleLabel("Manajemen Pengguna", 22);
+      Region spacer = new Region();
+      HBox.setHgrow(spacer, Priority.ALWAYS);
+      Button btnTambah = StyleKit.primaryButton("+ Tambah Pengguna");
+      btnTambah.setOnAction(e -> showFormUserDialog(null));
+      header.getChildren().addAll(title, spacer, btnTambah);
+
+      ObservableList<User> userData = FXCollections.observableArrayList(ds.getAllUsers());
+      TableView<User> tv = new TableView<>(userData);
+      tv.setStyle(
+        "-fx-background-color: " + StyleKit.CARD_BG + ";" +
+        "-fx-text-fill: " + StyleKit.TEXT_PRIMARY + ";" +
+        "-fx-border-color: " + StyleKit.BORDER + ";" +
+        "-fx-border-radius: 10; -fx-background-radius: 10;"
+      );
+      tv.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+      VBox.setVgrow(tv, Priority.ALWAYS);
+
+      TableColumn<User, String> colNamaColumn = new TableColumn<>("Nama");
+      colNamaColumn.setCellValueFactory(new PropertyValueFactory<>("nama"));
+      colNamaColumn.setCellFactory(c -> new TableCell<>() {
+        @Override protected void updateItem(String v, boolean empty) {
+          super.updateItem(v, empty);
+          setText(empty ? null : v);
+          setTextFill(Color.web("#222222"));
+        }
+      });
+
+      TableColumn<User, String> colUsername = new TableColumn<>("Username");
+      colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
+      colUsername.setCellFactory(c -> new TableCell<>() {
+        @Override protected void updateItem(String v, boolean empty) {
+          super.updateItem(v, empty);
+          setText(empty ? null : v);
+          setTextFill(Color.web("#222222"));
+        }
+      });
+
+      TableColumn<User, String> colRole = new TableColumn<>("Role");
+      colRole.setCellFactory(c -> new TableCell<>() {
+        @Override protected void updateItem(String item, boolean empty) {
+          super.updateItem(item, empty);
+            if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+              setText(null);
+            } else {
+              User u = getTableRow().getItem();
+              setText(u instanceof Admin ? "Administrator" : "Buyer");
+              setTextFill(Color.web("#222222"));
+            }
+          }
+      });
+
+      TableColumn<User, Void> colAksi = new TableColumn<>("Aksi");
+      colAksi.setPrefWidth(80);
+      colAksi.setCellFactory(c -> new TableCell<>() {
+        private final Button btnHapus = new Button("Hapus");
+        {
+          btnHapus.setStyle("-fx-background-color: " + StyleKit.ACCENT + "; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6;");
+          btnHapus.setOnAction(e -> {
+            User u = getTableView().getItems().get(getIndex());
+            if (u.getUsername().equals("admin")) {
+              new Alert(Alert.AlertType.ERROR, "Akun Super Admin tidak bisa dihapus!").showAndWait();
+                return;
+              }
+            ds.hapusUser(u.getId());
+            userData.setAll(ds.getAllUsers());
+          });
+        }
+        @Override protected void updateItem(Void v, boolean empty) {
+          super.updateItem(v, empty);
+          setGraphic(empty ? null : btnHapus);
+          setAlignment(Pos.CENTER);
+        }
+      });
+
+      tv.getColumns().addAll(colNamaColumn, colUsername, colRole, colAksi);
+      content.getChildren().addAll(header, tv);
+      return content;
+    }
+
+
   private VBox buildOutfitPanel() { return new VBox(); }
   private VBox buildTransaksiPanel() { return new VBox(); }
   private void logout() {}
